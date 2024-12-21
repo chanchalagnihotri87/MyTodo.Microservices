@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.UpdateObjectiveText;
 
@@ -15,11 +16,11 @@ public class UpdateObjectiveCommandValidator : AbstractValidator<UpdateObjective
     }
 }
 
-public class UpdateObjectiveTextHandler(IDocumentSession session) : ICommandHandler<UpdateObjectiveTextCommand, UpdateObjectiveTestResult>
+public class UpdateObjectiveTextHandler(ObjectiveDbContext dbContext) : ICommandHandler<UpdateObjectiveTextCommand, UpdateObjectiveTestResult>
 {
     public async Task<UpdateObjectiveTestResult> Handle(UpdateObjectiveTextCommand command, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(command.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(command.Id, cancellationToken);
 
         if (objective == null || objective.UserId != command.UserId)
         {
@@ -28,9 +29,9 @@ public class UpdateObjectiveTextHandler(IDocumentSession session) : ICommandHand
 
         objective.Text = command.Text;
 
-        session.Update<Objective>(objective);
+        dbContext.Objectives.Update(objective);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new UpdateObjectiveTestResult(true);
     }

@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.ToggleTwentyPercent;
 
@@ -6,11 +7,11 @@ public record ToggleTwentyPercentCommand(int Id, bool TwentyPercent, Guid UserId
 
 public record ToggleTwentyPercentResult(bool IsSuccess);
 
-public class ToggleTwentyPercentHandler(IDocumentSession session) : ICommandHandler<ToggleTwentyPercentCommand, ToggleTwentyPercentResult>
+public class ToggleTwentyPercentHandler(ObjectiveDbContext dbContext) : ICommandHandler<ToggleTwentyPercentCommand, ToggleTwentyPercentResult>
 {
     public async Task<ToggleTwentyPercentResult> Handle(ToggleTwentyPercentCommand command, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(command.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(command.Id, cancellationToken);
 
         if (objective == null || objective.UserId != command.UserId)
         {
@@ -19,9 +20,9 @@ public class ToggleTwentyPercentHandler(IDocumentSession session) : ICommandHand
 
         objective.TwentyPercent = command.TwentyPercent;
 
-        session.Update<Objective>(objective);
+        dbContext.Objectives.Update(objective);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new ToggleTwentyPercentResult(true);
     }

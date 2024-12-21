@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.CreateObjective;
 
@@ -14,11 +15,11 @@ public class CreateObjectiveCommandValidator : AbstractValidator<CreateObjective
     }
 }
 
-public class CreateObjectiveHandler(IDocumentSession session) : ICommandHandler<CreateObjectiveCommand, CreateObjectiveResult>
+public class CreateObjectiveHandler(ObjectiveDbContext dbContext) : ICommandHandler<CreateObjectiveCommand, CreateObjectiveResult>
 {
     public async Task<CreateObjectiveResult> Handle(CreateObjectiveCommand command, CancellationToken cancellationToken)
     {
-        var index = session.Query<Objective>().Where(x => x.UserId == command.UserId && x.GoalId == command.Objective.GoalId).Max(x => x.Index);
+        var index = dbContext.Objectives.Any(x => x.UserId == command.UserId && x.GoalId == command.Objective.GoalId) ? dbContext.Objectives.Where(x => x.UserId == command.UserId && x.GoalId == command.Objective.GoalId).Max(x => x.Index) : 0;
 
         var objective = command.Objective.Adapt<Objective>();
 
@@ -26,8 +27,8 @@ public class CreateObjectiveHandler(IDocumentSession session) : ICommandHandler<
         objective.UserId = command.UserId;
         objective.Index = index + 1;
 
-        session.Store<Objective>(objective);
-        await session.SaveChangesAsync();
+        dbContext.Objectives.Add(objective);
+        await dbContext.SaveChangesAsync();
 
         return new CreateObjectiveResult(objective.Id);
     }

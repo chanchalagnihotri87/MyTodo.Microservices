@@ -1,4 +1,5 @@
-﻿using Problems.API.Domain;
+﻿using Problems.API.Data;
+using Problems.API.Domain;
 
 namespace Problems.API.Problems.CreateProblem;
 
@@ -16,11 +17,11 @@ public class CreateProblemCommandValidator : AbstractValidator<CreateProblemComm
     }
 }
 
-public class CreateProblemHandler(IDocumentSession session) : ICommandHandler<CreateProblemCommand, CreateProblemResult>
+public class CreateProblemHandler(ProblemDbContext dbContext) : ICommandHandler<CreateProblemCommand, CreateProblemResult>
 {
     public async Task<CreateProblemResult> Handle(CreateProblemCommand command, CancellationToken cancellationToken)
     {
-        var index = session.Query<Problem>().Where(x => x.User_Id == command.UserId && x.LifeAreaId == command.Problem.LifeAreaId).Max(x => x.Index);
+        var index = dbContext.Problems.Any(x => x.User_Id == command.UserId && x.LifeAreaId == command.Problem.LifeAreaId) ? dbContext.Problems.Where(x => x.User_Id == command.UserId && x.LifeAreaId == command.Problem.LifeAreaId).Max(x => x.Index) : 1;
 
         var problem = command.Problem.Adapt<Problem>();
 
@@ -29,9 +30,9 @@ public class CreateProblemHandler(IDocumentSession session) : ICommandHandler<Cr
         problem.Index = index + 1;
 
 
-        session.Store(problem);
+        dbContext.Problems.Add(problem);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new CreateProblemResult(problem.Id);
     }

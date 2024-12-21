@@ -2,7 +2,8 @@ using BuildingBlocks.Behaviours;
 using BuildingBlocks.Exceptions.Handler;
 using FluentValidation;
 using Goals.API.Data;
-using Marten;
+
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,18 +21,22 @@ builder.Services.AddMediatR(config =>
 
 builder.Services.AddValidatorsFromAssembly(assembly);
 
-builder.Services.AddMarten(options =>
+builder.Services.AddDbContext<GoalDbContext>(opts =>
 {
-    options.Connection(builder.Configuration.GetConnectionString("Database")!);
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Database"));
+
 });
 
-builder.Services.InitializeMartenWith<GoalsInitialData>();
+
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
 var app = builder.Build();
 
 //Add services in request pipelines
+
+app.UseMigration();
+
 app.MapCarter();
 
 app.UseExceptionHandler(option => { });

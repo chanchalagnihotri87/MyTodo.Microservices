@@ -1,30 +1,21 @@
 ﻿using Goals.API.Domain;
-using Marten.Schema;
-using System.Net.Sockets;
+using Microsoft.EntityFrameworkCore;
 
-namespace Goals.API.Data;
-
-public class GoalsInitialData : IInitialData
+namespace Goals.API.Data
 {
-    public async Task Populate(IDocumentStore store, CancellationToken cancellation)
+    public class GoalDbContext : DbContext
     {
-        using var session = store.LightweightSession();
+        public DbSet<Goal> Goals { get; set; }
 
-        if (await session.Query<Goal>().AnyAsync())
+        public GoalDbContext(DbContextOptions options) : base(options)
         {
-            return;
+
         }
 
-        session.Store<Goal>(GetPreconfiguredGoals());
-
-        await session.SaveChangesAsync();
-    }
-
-    public static IEnumerable<Goal> GetPreconfiguredGoals()
-    {
-        return new List<Goal>
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            new Goal
+            modelBuilder.Entity<Goal>().HasData(new List<Goal>
+            {new Goal
             {
                 Id=1,
                 Text="Correct in english",
@@ -60,6 +51,10 @@ public class GoalsInitialData : IInitialData
                 Completed=false,
                 UserId=UserConstants.UserId
             }
-        };
+
+            });
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

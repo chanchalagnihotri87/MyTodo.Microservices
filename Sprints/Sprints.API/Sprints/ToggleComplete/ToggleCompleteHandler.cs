@@ -1,5 +1,4 @@
 ﻿
-using Sprints.API.Domain;
 
 namespace Sprints.API.Sprinits.ToggleComplete;
 
@@ -7,11 +6,11 @@ public record ToggleCompletedCommand(int Id, bool Completed, Guid UserId):IComma
 
 public record ToggleCompletedResult(bool IsSuccess);
 
-public class ToggleCompleteHandler(IDocumentSession session) : ICommandHandler<ToggleCompletedCommand, ToggleCompletedResult>
+public class ToggleCompleteHandler(SprintDbContext dbContext) : ICommandHandler<ToggleCompletedCommand, ToggleCompletedResult>
 {
     public async Task<ToggleCompletedResult> Handle(ToggleCompletedCommand command, CancellationToken cancellationToken)
     {
-        var sprint = await session.LoadAsync<Sprint>(command.Id, cancellationToken);
+        var sprint = await dbContext.Sprints.FindAsync(command.Id, cancellationToken);
 
         if (sprint == null || sprint.UserId != command.UserId)
         {
@@ -20,9 +19,9 @@ public class ToggleCompleteHandler(IDocumentSession session) : ICommandHandler<T
 
         sprint.Completed = command.Completed;
 
-        session.Update<Sprint>(sprint);
+        dbContext.Sprints.Update(sprint);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new ToggleCompletedResult(true);
     }

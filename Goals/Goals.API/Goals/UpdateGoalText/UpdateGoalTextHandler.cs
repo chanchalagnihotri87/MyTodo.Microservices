@@ -1,5 +1,6 @@
 ﻿
 using FluentValidation;
+using Goals.API.Data;
 using Goals.API.Domain;
 
 namespace Goals.API.Goals.UpdateGoalText;
@@ -17,11 +18,11 @@ public class UpdateGoalCommandValidator : AbstractValidator<UpdateGoalTextComman
     }
 }
 
-public class UpdateGoalTextHandler(IDocumentSession session) : ICommandHandler<UpdateGoalTextCommand, UpdateGoalTestResult>
+public class UpdateGoalTextHandler(GoalDbContext dbContext) : ICommandHandler<UpdateGoalTextCommand, UpdateGoalTestResult>
 {
     public async Task<UpdateGoalTestResult> Handle(UpdateGoalTextCommand command, CancellationToken cancellationToken)
     {
-        var goal = await session.LoadAsync<Goal>(command.Id, cancellationToken);
+        var goal = await dbContext.Goals.FindAsync(command.Id, cancellationToken);
 
         if (goal == null || goal.UserId != command.UserId)
         {
@@ -30,9 +31,9 @@ public class UpdateGoalTextHandler(IDocumentSession session) : ICommandHandler<U
 
         goal.Text = command.Text;
 
-        session.Update<Goal>(goal);
+        dbContext.Goals.Update(goal);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new UpdateGoalTestResult(true);
     }

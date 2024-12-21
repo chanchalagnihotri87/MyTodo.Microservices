@@ -1,4 +1,6 @@
 ﻿using BuildingBlocks.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Problems.API.Data;
 using Problems.API.Domain;
 namespace Problems.API.Problems.ToggleTwentyPercent;
 
@@ -6,11 +8,11 @@ public record ToggleTwentyPercentCommand(int Id, bool TwentyPercent, Guid UserId
 
 public record ToggleTwentyPercentResult(bool IsSuccess);
 
-public class ToggleTwentyPercentHandler(IDocumentSession session) : ICommandHandler<ToggleTwentyPercentCommand, ToggleTwentyPercentResult>
+public class ToggleTwentyPercentHandler(ProblemDbContext context) : ICommandHandler<ToggleTwentyPercentCommand, ToggleTwentyPercentResult>
 {
     public async Task<ToggleTwentyPercentResult> Handle(ToggleTwentyPercentCommand command, CancellationToken cancellationToken)
     {
-        var problem = await session.LoadAsync<Problem>(command.Id, cancellationToken);
+        var problem = await context.Problems.FindAsync(command.Id, cancellationToken);
 
         if (problem == null || problem.User_Id != command.UserId)
         {
@@ -19,9 +21,9 @@ public class ToggleTwentyPercentHandler(IDocumentSession session) : ICommandHand
 
         problem.TwentyPercent = command.TwentyPercent;
 
-        session.Update<Problem>(problem);
+        context.Update(problem);
 
-        await session.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         return new ToggleTwentyPercentResult(true);
     }

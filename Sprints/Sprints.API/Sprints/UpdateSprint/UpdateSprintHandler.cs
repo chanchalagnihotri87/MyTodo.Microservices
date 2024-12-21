@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Sprints.API.Domain;
+
 
 namespace Sprints.API.Sprints.UpdateSprint;
 
@@ -16,11 +16,11 @@ public class UpdateSprintCommandValidator : AbstractValidator<UpdateSprintComman
     }
 }
 
-public class UpdateSprintHandler(IDocumentSession session) : ICommandHandler<UpdateSprintCommand, UpdateSprintResult>
+public class UpdateSprintHandler(SprintDbContext dbContext) : ICommandHandler<UpdateSprintCommand, UpdateSprintResult>
 {
     public async Task<UpdateSprintResult> Handle(UpdateSprintCommand command, CancellationToken cancellationToken)
     {
-        var sprint = await session.LoadAsync<Sprint>(command.Sprint.Id, cancellationToken);
+        var sprint = await dbContext.Sprints.FindAsync(command.Sprint.Id, cancellationToken);
 
         if (sprint == null || sprint.UserId != command.UserId)
         {
@@ -31,9 +31,9 @@ public class UpdateSprintHandler(IDocumentSession session) : ICommandHandler<Upd
         sprint.StartDate = command.Sprint.StartDate.Date;
         sprint.EndDate = command.Sprint.EndDate.Date;
 
-        session.Update<Sprint>(sprint);
+        dbContext.Sprints.Update(sprint);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new UpdateSprintResult(true);
     }

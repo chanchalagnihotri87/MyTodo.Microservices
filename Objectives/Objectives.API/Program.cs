@@ -1,13 +1,12 @@
-
-
 using BuildingBlocks.Behaviours;
 using BuildingBlocks.Exceptions.Handler;
 using Carter;
 using FluentValidation;
-using Marten;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
- using BuildingBlocks.Messages.MassTransit; 
+using BuildingBlocks.Messages.MassTransit;
+using Objectives.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,9 +26,11 @@ builder.Services.AddValidatorsFromAssembly(assembly);
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
-builder.Services.AddMarten(option =>
+
+builder.Services.AddDbContext<ObjectiveDbContext>(opts =>
 {
-    option.Connection(builder.Configuration.GetConnectionString("Database")!);
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Database"));
+
 });
 
 builder.Services.AddMessageBroker(builder.Configuration, Assembly.GetExecutingAssembly());
@@ -37,6 +38,7 @@ builder.Services.AddMessageBroker(builder.Configuration, Assembly.GetExecutingAs
 var app = builder.Build();
 
 //Configure the HTTP request pipeline
+app.UseMigration();
 
 app.MapCarter();
 

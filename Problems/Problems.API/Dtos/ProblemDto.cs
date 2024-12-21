@@ -1,10 +1,8 @@
-﻿using Marten.Schema;
-
+﻿
 namespace Problems.API.Dtos;
 
 public class ProblemDto
 {
-    [Identity]
     public int Id { get; set; }
     public string Text { get; set; } = default!;
     public string Plan { get; set; } = default!;

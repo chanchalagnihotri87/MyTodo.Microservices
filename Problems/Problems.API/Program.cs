@@ -1,5 +1,6 @@
 using BuildingBlocks.Behaviours;
 using BuildingBlocks.Exceptions.Handler;
+using Microsoft.EntityFrameworkCore;
 using Problems.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,21 +22,18 @@ builder.Services.AddValidatorsFromAssembly(assembly); // For Fluent Validation
 
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 
-builder.Services.AddMarten(opts =>
+
+builder.Services.AddDbContext<ProblemDbContext>(opts =>
 {
-    opts.Connection(builder.Configuration.GetConnectionString("Database")!);//Connection of postgres db
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Database"));
 
-}).UseLightweightSessions();
-
-
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.InitializeMartenWith<ProblemsInitialData>();
-}
+});
 
 var app = builder.Build();
 
 //Add request pipelines
+
+app.UseMigration();
 
 app.MapCarter(); //Scan carter module
 

@@ -1,4 +1,5 @@
 using Tasks.API;
+using Tasks.API.Data;
 using Tasks.Application;
 using Tasks.Infrastructure;
 
@@ -14,6 +15,9 @@ builder.Services.
 var app = builder.Build();
 
 //Configurat HTTP request pipelines
+
+app.UseMigration();
+
 app.UseApiServices();
 
 app.Run();

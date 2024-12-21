@@ -1,4 +1,5 @@
 ﻿
+using Objectives.API.Data;
 using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.GetObjectiveById;
@@ -7,11 +8,11 @@ public record GetObjectiveByIdQuery(int Id, Guid UserId) : IQuery<GetObjectiveBy
 
 public record GetObjectiveByIdResult(ObjectiveDto Objective);
 
-public class DeleteObjectiveHandler(IDocumentSession session) : IQueryHandler<GetObjectiveByIdQuery, GetObjectiveByIdResult>
+public class DeleteObjectiveHandler(ObjectiveDbContext dbContext) : IQueryHandler<GetObjectiveByIdQuery, GetObjectiveByIdResult>
 {
     public async Task<GetObjectiveByIdResult> Handle(GetObjectiveByIdQuery query, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(query.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(query.Id, cancellationToken);
 
         if (objective == null || objective.UserId != query.UserId)
         {

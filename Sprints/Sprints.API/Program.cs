@@ -1,15 +1,17 @@
 using BuildingBlocks.Behaviours;
 using BuildingBlocks.Exceptions.Handler;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Add Services to container
 var assembly = typeof(Program).Assembly;
 
-builder.Services.AddMarten(opts =>
+builder.Services.AddDbContext<SprintDbContext>(opts =>
 {
-    opts.Connection(builder.Configuration.GetConnectionString("Database")!);
+    opts.UseSqlite(builder.Configuration.GetConnectionString("Database"));
+
 });
 
 builder.Services.AddMediatR(config =>
@@ -30,6 +32,8 @@ builder.Services.AddCarter();
 var app = builder.Build();
 
 //Configure HTTP request pipeline
+app.UseMigration();
+
 app.MapCarter();
 
 app.UseExceptionHandler(config => { });

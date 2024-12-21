@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+using Objectives.API.Data;
 using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.MoveGoal;
@@ -8,11 +10,11 @@ public record MoveObjectiveCommand(int Id, int GoalId, int index, Guid UserId) :
 
 public record MoveObjectiveResult(bool IsSuccess);
 
-public class MoveObjectiveHandler(IDocumentSession session) : ICommandHandler<MoveObjectiveCommand, MoveObjectiveResult>
+public class MoveObjectiveHandler(ObjectiveDbContext dbContext) : ICommandHandler<MoveObjectiveCommand, MoveObjectiveResult>
 {
     public async Task<MoveObjectiveResult> Handle(MoveObjectiveCommand command, CancellationToken cancellationToken)
     {
-        var objectives = await session.Query<Objective>().Where(x => x.UserId == command.UserId && x.GoalId == command.GoalId).ToListAsync();
+        var objectives = await dbContext.Objectives.Where(x => x.UserId == command.UserId && x.GoalId == command.GoalId).ToListAsync();
 
         var draggedObjective = objectives.First(x => x.Id == command.Id);
 
@@ -45,9 +47,9 @@ public class MoveObjectiveHandler(IDocumentSession session) : ICommandHandler<Mo
 
         draggedObjective.Index = newIndex;
 
-        session.Update<Objective>(objectives);
+        dbContext.Objectives.UpdateRange(objectives);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
 
         return new MoveObjectiveResult(true);

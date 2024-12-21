@@ -1,5 +1,6 @@
 ﻿
 using BuildingBlocks.Exceptions;
+using Problems.API.Data;
 using Problems.API.Domain;
 
 namespace Problems.API.Problems.UpdateProblemText;
@@ -17,11 +18,11 @@ public class UpdateProblemCommandValidator : AbstractValidator<UpdateProblemText
     }
 }
 
-public class UpdateProblemNameHandler(IDocumentSession session) : ICommandHandler<UpdateProblemTextCommand, UpdateProblemTextResult>
+public class UpdateProblemNameHandler(ProblemDbContext dbContext) : ICommandHandler<UpdateProblemTextCommand, UpdateProblemTextResult>
 {
     public async Task<UpdateProblemTextResult> Handle(UpdateProblemTextCommand command, CancellationToken cancellationToken)
     {
-        var problem = await session.LoadAsync<Problem>(command.Id, cancellationToken);
+        var problem = await dbContext.Problems.FindAsync(command.Id, cancellationToken);
 
         if (problem == null || problem.User_Id != command.UserId)
         {
@@ -30,9 +31,9 @@ public class UpdateProblemNameHandler(IDocumentSession session) : ICommandHandle
 
         problem.Text = command.Text;
 
-        session.Update<Problem>(problem);
+        dbContext.Problems.Update(problem);
 
-        await session.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new UpdateProblemTextResult(true);
     }

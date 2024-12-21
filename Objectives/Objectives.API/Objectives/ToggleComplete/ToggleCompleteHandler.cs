@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.ToggleComplete;
 
@@ -6,11 +7,11 @@ public record ToggleCompletedCommand(int Id, bool Completed, Guid UserId):IComma
 
 public record ToggleCompletedResult(bool IsSuccess);
 
-public class ToggleCompleteHandler(IDocumentSession session) : ICommandHandler<ToggleCompletedCommand, ToggleCompletedResult>
+public class ToggleCompleteHandler(ObjectiveDbContext dbContext) : ICommandHandler<ToggleCompletedCommand, ToggleCompletedResult>
 {
     public async Task<ToggleCompletedResult> Handle(ToggleCompletedCommand command, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(command.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(command.Id, cancellationToken);
 
         if (objective == null || objective.UserId != command.UserId)
         {
@@ -19,9 +20,9 @@ public class ToggleCompleteHandler(IDocumentSession session) : ICommandHandler<T
 
         objective.Completed = command.Completed;
 
-        session.Update<Objective>(objective);
+        dbContext.Objectives.Update(objective);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new ToggleCompletedResult(true);
     }

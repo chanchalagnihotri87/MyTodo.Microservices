@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.UpdatePlan;
 
@@ -6,11 +7,11 @@ public record UpdatePlanCommand(int Id, string Plan, Guid UserId) : ICommand<Upd
 
 public record UpdatePlanResult(bool IsSuccess);
 
-public class UpdatePlanHandler(IDocumentSession session) : ICommandHandler<UpdatePlanCommand, UpdatePlanResult>
+public class UpdatePlanHandler(ObjectiveDbContext dbContext) : ICommandHandler<UpdatePlanCommand, UpdatePlanResult>
 {
     public async Task<UpdatePlanResult> Handle(UpdatePlanCommand command, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(command.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(command.Id, cancellationToken);
 
         if (objective == null || objective.UserId != command.UserId)
         {
@@ -19,9 +20,9 @@ public class UpdatePlanHandler(IDocumentSession session) : ICommandHandler<Updat
 
         objective.Plan = command.Plan;
 
-        session.Update<Objective>(objective);
+        dbContext.Objectives.Update(objective);
 
-        await session.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new UpdatePlanResult(true);
     }

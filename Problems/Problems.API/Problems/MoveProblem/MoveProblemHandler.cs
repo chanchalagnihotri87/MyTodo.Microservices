@@ -1,5 +1,7 @@
 ﻿
 using BuildingBlocks.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Problems.API.Data;
 using Problems.API.Domain;
 
 namespace Problems.API.Problems.MoveProblem;
@@ -8,11 +10,11 @@ public record MoveProblemCommand(int Id, int LifeAreaId, int index, Guid UserId)
 
 public record MoveProblemResult(bool IsSuccess);
 
-public class MoveProblemHandler(IDocumentSession session) : ICommandHandler<MoveProblemCommand, MoveProblemResult>
+public class MoveProblemHandler(ProblemDbContext context) : ICommandHandler<MoveProblemCommand, MoveProblemResult>
 {
     public async Task<MoveProblemResult> Handle(MoveProblemCommand command, CancellationToken cancellationToken)
     {
-        var problems = await session.Query<Problem>().Where(x => x.User_Id == command.UserId && x.LifeAreaId == command.LifeAreaId).ToListAsync();
+        var problems = await context.Problems.Where(x => x.User_Id == command.UserId && x.LifeAreaId == command.LifeAreaId).ToListAsync();
 
         var draggedProblem = problems.First(x => x.Id == command.Id);
 
@@ -45,9 +47,9 @@ public class MoveProblemHandler(IDocumentSession session) : ICommandHandler<Move
 
         draggedProblem.Index = newIndex;
 
-        session.Update<Problem>(problems);
+        context.Update(problems);
 
-        await session.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
 
         return new MoveProblemResult(true);

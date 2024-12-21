@@ -1,10 +1,7 @@
-﻿using Marten.Schema;
-
-namespace Sprints.API.Domain
+﻿namespace Sprints.API.Domain
 {
     public class Sprint
     {
-        [Identity]
         public int Id { get; set; }
         public string Text { get; set; } = default!;
         public bool Completed { get; set; }

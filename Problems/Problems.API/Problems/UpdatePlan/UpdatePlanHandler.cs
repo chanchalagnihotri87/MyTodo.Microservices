@@ -1,4 +1,5 @@
-﻿using Problems.API.Domain;
+﻿using Problems.API.Data;
+using Problems.API.Domain;
 
 
 namespace Problems.API.Problems.UpdatePlan;
@@ -7,11 +8,11 @@ public record UpdatePlanCommand(int Id, string Plan, Guid UserId) : ICommand<Upd
 
 public record UpdatePlanResult(bool IsSuccess);
 
-public class UpdatePlanHandler(IDocumentSession session) : ICommandHandler<UpdatePlanCommand, UpdatePlanResult>
+public class UpdatePlanHandler(ProblemDbContext dbContext) : ICommandHandler<UpdatePlanCommand, UpdatePlanResult>
 {
     public async Task<UpdatePlanResult> Handle(UpdatePlanCommand command, CancellationToken cancellationToken)
     {
-        var problem = await session.LoadAsync<Problem>(command.Id, cancellationToken);
+        var problem = await dbContext.Problems.FindAsync(command.Id, cancellationToken);
 
         if (problem == null || problem.User_Id != command.UserId)
         {
@@ -20,9 +21,9 @@ public class UpdatePlanHandler(IDocumentSession session) : ICommandHandler<Updat
 
         problem.Plan = command.Plan;
 
-        session.Update<Problem>(problem);
+        dbContext.Problems.Update(problem);
 
-        await session.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new UpdatePlanResult(true);
     }

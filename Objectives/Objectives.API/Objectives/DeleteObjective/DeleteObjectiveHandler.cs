@@ -1,4 +1,5 @@
-﻿using Objectives.API.Domain;
+﻿using Objectives.API.Data;
+using Objectives.API.Domain;
 
 namespace Objectives.API.Objectives.DeleteObjective;
 
@@ -6,20 +7,20 @@ public record DeleteObjectiveCommand(int Id, Guid UserId) : ICommand<DeleteObjec
 
 public record DeleteObjectiveResult(bool IsSuccess);
 
-public class DeleteObjectiveHandler(IDocumentSession session) : ICommandHandler<DeleteObjectiveCommand, DeleteObjectiveResult>
+public class DeleteObjectiveHandler(ObjectiveDbContext dbContext) : ICommandHandler<DeleteObjectiveCommand, DeleteObjectiveResult>
 {
     public async Task<DeleteObjectiveResult> Handle(DeleteObjectiveCommand command, CancellationToken cancellationToken)
     {
-        var objective = await session.LoadAsync<Objective>(command.Id, cancellationToken);
+        var objective = await dbContext.Objectives.FindAsync(command.Id, cancellationToken);
 
         if (objective == null || objective.UserId != command.UserId)
         {
             throw new NotFoundException("Objective", command.Id);
         }
 
-        session.Delete(objective);
+        dbContext.Objectives.Remove(objective);
 
-        await session.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return new DeleteObjectiveResult(true);
     }

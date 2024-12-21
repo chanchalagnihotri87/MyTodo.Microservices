@@ -5,11 +5,11 @@ using System.Threading;
 
 namespace Objectives.API.Objectives.EventHandlers.Integration
 {
-    public class ObjectiveCompletionEventHandler(IDocumentSession session) : IConsumer<ObjectiveCompletionEvent>
+    public class ObjectiveCompletionEventHandler(ObjectiveDbContext dbContext) : IConsumer<ObjectiveCompletionEvent>
     {
         public async Task Consume(ConsumeContext<ObjectiveCompletionEvent> context)
         {
-            var objective = await session.LoadAsync<Objective>(context.Message.ObjectiveId);
+            var objective = await dbContext.Objectives.FindAsync(context.Message.ObjectiveId);
 
             if (objective.Completed == context.Message.Completed)
             {
@@ -18,9 +18,9 @@ namespace Objectives.API.Objectives.EventHandlers.Integration
 
             objective.Completed = context.Message.Completed;
 
-            session.Update(objective);
+            dbContext.Objectives.Update(objective);
 
-            await session.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
         }
     }
 }
